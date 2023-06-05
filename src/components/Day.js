@@ -4,8 +4,12 @@ import React, { useContext, useEffect, useState } from 'react';
 
 const Day = ({ day, rowIndex }) => {
   const [dayEvents, setDayEvents] = useState([]);
-  const { setDaySelected, setShowEventModal, savedEvents } =
-    useContext(GlobalContext);
+  const {
+    setDaySelected,
+    setShowEventModal,
+    filteredEvents: savedEvents,
+    setSelectedEvent,
+  } = useContext(GlobalContext);
   function getCurrentDayClass() {
     return day.format('DD-MM-YY') === dayjs().format('DD-MM-YY')
       ? 'bg-blue-500 text-white rounded-full w-6 h-6 font-bold,'
@@ -17,7 +21,13 @@ const Day = ({ day, rowIndex }) => {
     setDayEvents(events);
   }, [savedEvents, day]);
 
-  const handleEvent = () => {
+  const handleEventModal = () => {
+    setDaySelected(day);
+    setShowEventModal(true);
+  };
+
+  const handleEvent = event => {
+    if (event) setSelectedEvent(event);
     setDaySelected(day);
     setShowEventModal(true);
   };
@@ -34,13 +44,16 @@ const Day = ({ day, rowIndex }) => {
           {day.format('DD')}
         </p>
       </header>
-      <div className='flex-1 cursor-pointer' onClick={handleEvent}>
+      <div className='flex-1 cursor-pointer' onClick={handleEventModal}>
         {dayEvents.length > 0 &&
           dayEvents.map((event, i) => {
             return (
               <>
                 <div
                   key={i}
+                  onClick={() => {
+                    handleEvent(event);
+                  }}
                   data-tooltip-target='tooltip-detail'
                   className={`p-1 m-1 text-xs text-gray-600 rounded-full bg-${event.label}-200`}>
                   {event.title}

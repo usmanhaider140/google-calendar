@@ -3,6 +3,7 @@ import {
   BookmarkBorder,
   Check,
   Close,
+  Delete,
   DragHandle,
   Schedule,
   Segment,
@@ -29,13 +30,23 @@ const labelsClasses = [
  */
 
 const EventModal = () => {
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [selectedLabel, setSelectedLabel] = useState('teal');
-  const { setShowEventModal, daySelected, dispatchEvents } =
-    useContext(GlobalContext);
+  const {
+    setShowEventModal,
+    daySelected,
+    dispatchEvents,
+    selectedEvent,
+    setSelectedEvent,
+  } = useContext(GlobalContext);
+  const [title, setTitle] = useState(selectedEvent?.title || '');
+  const [description, setDescription] = useState(
+    selectedEvent?.description || '',
+  );
+  const [selectedLabel, setSelectedLabel] = useState(
+    selectedEvent?.label || 'teal',
+  );
 
   const handleClose = () => {
+    setSelectedEvent(null);
     setShowEventModal(false);
   };
 
@@ -45,28 +56,63 @@ const EventModal = () => {
 
   const handleSubmit = e => {
     e.preventDefault();
+    if (selectedEvent) {
+      dispatchEvents({
+        type: 'UPDATE_EVENT',
+        payload: {
+          id: selectedEvent.id,
+          title,
+          description,
+          label: selectedLabel,
+          day: daySelected.valueOf(),
+          time: daySelected.format('HH:mm'),
+        },
+      });
+      setSelectedEvent(null);
+    } else {
+      dispatchEvents({
+        type: 'ADD_EVENT',
+        payload: {
+          id: Date.now(),
+          title,
+          description,
+          label: selectedLabel,
+          day: daySelected.valueOf(),
+          time: daySelected.format('HH:mm'),
+        },
+      });
+    }
+    setShowEventModal(false);
+  };
+
+  const handleDelete = () => {
     dispatchEvents({
-      type: 'ADD_EVENT',
+      type: 'DELETE_EVENT',
       payload: {
-        id: Date.now(),
-        title,
-        description,
-        label: selectedLabel,
-        day: daySelected.valueOf(),
-        time: daySelected.format('HH:mm'),
+        id: selectedEvent.id,
       },
     });
+    setSelectedEvent(null);
     setShowEventModal(false);
   };
 
   return (
     <div className='fixed top-0 left-0 flex items-center justify-center w-full h-screen backdrop-blur-sm'>
-      <form className='w-1/3 bg-white rounded-lg shadow-2xl'>
+      <div className='w-1/3 bg-white rounded-lg shadow-2xl'>
         <header className='flex items-center justify-between px-4 py-2 text-gray-400 bg-gray-100'>
           <DragHandle />
-          <button onClick={handleClose}>
-            <Close />
-          </button>
+          <div className='space-x-2'>
+            {selectedEvent && (
+              <button
+                onClick={handleDelete}
+                className='transition transition-colors hover:text-red-500'>
+                <Delete />
+              </button>
+            )}
+            <button onClick={handleClose}>
+              <Close />
+            </button>
+          </div>
         </header>
         <div className='p-3'>
           <div className='grid items-end grid-cols-1/5 gap-y-7'>
@@ -117,7 +163,7 @@ const EventModal = () => {
             Save
           </button>
         </footer>
-      </form>
+      </div>
     </div>
   );
 };
